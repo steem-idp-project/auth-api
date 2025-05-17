@@ -67,7 +67,7 @@ def health_check():
     """
     Health check endpoint to verify if the service is running.
     """
-    return None, 200
+    return jsonify(""), 200
 
 
 @app.route("/signup", methods=["POST"])
