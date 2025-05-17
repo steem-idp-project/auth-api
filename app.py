@@ -1,9 +1,13 @@
+"""
+auth-api
+"""
+
 import os
-import jwt
-from flask import Flask, request, jsonify
-from requests import post, get
 from time import time
 
+import jwt
+from flask import Flask, jsonify, request
+from requests import post
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
@@ -67,7 +71,7 @@ def health_check():
     """
     Health check endpoint to verify if the service is running.
     """
-    return jsonify(""), 200
+    return jsonify({"status": "healthy"}), 200
 
 
 @app.route("/signup", methods=["POST"])
@@ -90,6 +94,7 @@ def signup():
     io_resp = post(
         f"{IO_API_URL}/users",
         json={"email": email, "passwd": passwd, "is_publisher": is_publisher},
+        timeout=5,
     )
     if io_resp.status_code != 201:
         app.logger.error(f"Failed to create user: {io_resp.text}")
@@ -144,11 +149,12 @@ def login():
     io_resp = post(
         f"{IO_API_URL}/users/validate",
         json={"email": email, "passwd": passwd},
+        timeout=5,
     )
     if io_resp.status_code == 401:
         app.logger.info("Invalid credentials")
         return jsonify({"error": "invalid credentials"}), 401
-    elif io_resp.status_code != 200:
+    if io_resp.status_code != 200:
         app.logger.info(f"Failed to validate user: {io_resp.text}")
         return jsonify({"error": "internal server error"}), 500
 
