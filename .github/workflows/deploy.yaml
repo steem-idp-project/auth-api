@@ -1,0 +1,37 @@
+name: "Deploy updates to K8s cluster"
+run-name: "Deploy updates to K8s cluster"
+on:
+    push:
+        tags:
+            - "v*.*.*"
+env:
+    IMAGE_NAME: "auth-api"
+    DOCKER_USER: ${{ secrets.DOCKER_USER }}
+    DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    ORG_TOKEN: ${{ secrets.ORG_TOKEN }}
+    UPDATER_TOKEN: ${{ secrets.UPDATER_TOKEN }}
+    K8S_DEPLOYMENT: "auth-api"
+jobs:
+    build_push:
+        runs-on: steem-runner
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Extract version
+              run: |
+                  echo "IMAGE_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+            - name: Build & push Docker image
+              uses: mr-smithers-excellent/docker-build-push@v6
+              with:
+                  image: "${{ env.DOCKER_USER }}/${{ env.IMAGE_NAME }}"
+                  tags: "${{ env.IMAGE_TAG }}"
+                  registry: docker.io
+                  dockerfile: Dockerfile
+                  username: ${{ secrets.DOCKER_USER }}
+                  password: ${{ secrets.DOCKER_PASSWORD }}
+    # patch_deployment:
+    #     runs-on: steem-runner
+    #     needs: build_push
+    #     steps:
+    #         - name: Patch the deployment
+    #           uses: indiesdev/curl@v1.1
